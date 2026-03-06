@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>UnifiedOS — Academic · Social · Smart Farming</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+<script src="config.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --void:#010810;--deep:#050E1C;--surface:#091629;--card:#0D1F33;
+  --border:#142B44;--glow:#0066FF;--glow2:#00CFFF;
+  --plasma:#FF3CAC;--green:#00FF88;--gold:#FFD700;--agri:#22c55e;
+  --white:#E8F4FF;--muted:#4A6A8A;
+  --Fd:'Syne',sans-serif;--Fm:'DM Mono',monospace;--Fs:'Instrument Serif',serif;
+}
+html,body{height:100%;background:var(--void);color:var(--white);font-family:var(--Fd);overflow:hidden}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--glow);border-radius:2px}
+
+/* ── STARS ── */
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+
+/* ── CURSOR ── */
+.cursor{position:fixed;width:9px;height:9px;border-radius:50%;background:var(--glow2);pointer-events:none;z-index:9999;mix-blend-mode:screen}
+.cursor-ring{position:fixed;width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,207,255,.3);pointer-events:none;z-index:9998;transition:all .15s;mix-blend-mode:screen}
+
+/* ── SCREENS ── */
+.screen{position:fixed;inset:0;z-index:10;display:none;flex-direction:column}
+.screen.active{display:flex}
+
+/* ════════ WELCOME ════════ */
+#welcome{background:var(--void);align-items:center;justify-content:center}
+.wc{position:relative;z-index:1;text-align:center;max-width:580px;padding:0 24px}
+.wc-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,102,255,.08);border:1px solid rgba(0,102,255,.2);border-radius:20px;padding:5px 14px;font-family:var(--Fm);font-size:11px;color:var(--glow2);letter-spacing:1px;margin-bottom:28px}
+.wc-title{font-size:clamp(52px,11vw,90px);font-weight:800;line-height:.88;letter-spacing:-5px;margin-bottom:20px}
+.wc-t1{display:block;color:var(--white)}
+.wc-t2{display:block;font-family:var(--Fs);font-style:italic;background:linear-gradient(90deg,var(--glow),var(--agri));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-3px}
+.wc-desc{color:var(--muted);font-size:14px;font-family:var(--Fm);letter-spacing:.5px;margin-bottom:44px;line-height:1.6}
+.wc-modules{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:36px}
+.wc-mod{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:left;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.wc-mod::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s}
+.wc-mod:hover::before{opacity:1}
+.wc-mod.edu::before{background:linear-gradient(135deg,rgba(0,102,255,.08),transparent)}
+.wc-mod.agri::before{background:linear-gradient(135deg,rgba(34,197,94,.08),transparent)}
+.wc-mod:hover{border-color:rgba(0,102,255,.4);transform:translateY(-2px)}
+.wc-mod.agri:hover{border-color:rgba(34,197,94,.4)}
+.wc-mod-icon{font-size:26px;margin-bottom:8px}
+.wc-mod-name{font-size:14px;font-weight:700;color:var(--white)}
+.wc-mod-desc{font-family:var(--Fm);font-size:11px;color:var(--muted);margin-top:3px}
+.btn-start{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;background:linear-gradient(135deg,#0033aa,var(--glow));border:none;border-radius:16px;padding:16px;font-family:var(--Fd);font-size:15px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 12px 40px rgba(0,102,255,.4);transition:all .2s;margin-bottom:12px}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 18px 50px rgba(0,102,255,.55)}
+.btn-ghost{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:none;border:1px solid var(--border);border-radius:14px;padding:14px;font-family:var(--Fd);font-size:14px;font-weight:600;color:var(--white);cursor:pointer;transition:all .2s}
+.btn-ghost:hover{border-color:var(--glow);background:rgba(0,102,255,.06)}
+.fade-in{animation:fadeUp .5s ease forwards}
+@keyframes fadeUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ════════ AUTH ════════ */
+#signup,#signin{background:var(--void);align-items:center;justify-content:center}
+.auth-box{z-index:1;width:100%;max-width:460px;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:40px;box-shadow:0 40px 120px rgba(0,0,0,.8)}
+.auth-logo{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#003bbf,var(--glow));display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px}
+.auth-title{font-size:23px;font-weight:800;margin-bottom:4px}
+.auth-sub{font-family:var(--Fm);font-size:12px;color:var(--muted);margin-bottom:24px}
+.badge-info{background:rgba(0,102,255,.07);border:1px solid rgba(0,102,255,.2);border-radius:12px;padding:12px 14px;margin-bottom:20px}
+.badge-ttl{color:var(--glow2);font-size:13px;font-weight:600;margin-bottom:3px}
+.badge-txt{color:var(--muted);font-family:var(--Fm);font-size:12px}
+.lbl{color:#6A8AAA;font-family:var(--Fm);font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:5px;margin-top:12px}
+.fi{position:relative}
+.fi-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
+.fi-input{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:11px 13px 11px 38px;color:var(--white);font-family:var(--Fd);font-size:14px;outline:none;transition:border-color .2s}
+.fi-input:focus{border-color:var(--glow);box-shadow:0 0 0 3px rgba(0,102,255,.1)}
+.fi-input::placeholder{color:var(--muted)}
+.ferr{color:#FF4466;font-family:var(--Fm);font-size:11px;margin-top:4px;display:none}
+.secure{background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.18);border-radius:10px;padding:10px 13px;margin:14px 0;display:flex;gap:8px;align-items:center;font-family:var(--Fm);font-size:12px;color:#6ee7b7}
+.btn-cta{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#003bbf,var(--glow));border:none;border-radius:13px;padding:13px;font-family:var(--Fd);font-size:15px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 8px 28px rgba(0,102,255,.4);transition:all .15s;margin-top:16px;margin-bottom:14px}
+.btn-cta:hover{transform:translateY(-1px);box-shadow:0 12px 36px rgba(0,102,255,.55)}
+.auth-sw{text-align:center;font-family:var(--Fm);font-size:12px;color:var(--muted)}
+.auth-sw a{color:var(--glow2);cursor:pointer;font-weight:600}
+.divider{display:flex;align-items:center;gap:14px;margin:12px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.divider span{color:var(--muted);font-family:var(--Fm);font-size:11px}
+
+/* ════════ LOADING ════════ */
+#loading{background:var(--void);align-items:center;justify-content:center;flex-direction:column;gap:18px}
+.loader{width:52px;height:52px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--glow);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{font-size:16px;font-weight:600}
+.load-sub{font-family:var(--Fm);font-size:13px;color:var(--muted)}
+
+/* ════════ MAIN APP ════════ */
+#app{flex-direction:row;height:100vh;overflow:hidden}
+
+/* NAV RAIL */
+.rail{width:70px;background:var(--deep);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:3px;flex-shrink:0;z-index:100}
+.rail-logo{width:44px;height:44px;background:linear-gradient(135deg,#003bbf,var(--glow));border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px;cursor:pointer;transition:transform .2s;flex-shrink:0}
+.rail-logo:hover{transform:scale(1.08)}
+.rail-btn{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;background:none;border:none;font-size:19px;color:var(--muted);flex-shrink:0;position:relative}
+.rail-btn:hover{background:rgba(0,102,255,.1);color:var(--white)}
+.rail-btn.active{background:rgba(0,102,255,.18);color:var(--glow2)}
+.rail-btn.active::before{content:'';position:absolute;left:-1px;width:3px;height:22px;background:var(--glow2);border-radius:0 3px 3px 0}
+.rail-btn.agri-btn{color:var(--muted)}
+.rail-btn.agri-btn.active{background:rgba(34,197,94,.15);color:var(--agri)}
+.rail-btn.agri-btn.active::before{background:var(--agri)}
+.rail-sep{width:36px;height:1px;background:var(--border);margin:6px 0}
+.rail-space{flex:1}
+.rail-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#003bbf,var(--glow));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;cursor:pointer;border:2px solid var(--border);transition:all .2s;flex-shrink:0}
+.rail-av:hover{border-color:var(--glow2)}
+.rbadge{position:absolute;top:5px;right:5px;width:15px;height:15px;background:var(--plasma);border-radius:50%;font-size:9px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--deep)}
+
+/* PANEL */
+.panel{width:290px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;flex-shrink:0;overflow:hidden}
+.ph{padding:14px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ph-title{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.ph-action{width:30px;height:30px;border-radius:8px;background:rgba(0,102,255,.1);border:1px solid rgba(0,102,255,.18);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .2s}
+.ph-action:hover{background:rgba(0,102,255,.22)}
+.search-wrap{padding:8px 10px;position:relative;flex-shrink:0}
+.search-wrap::before{content:'🔍';position:absolute;left:20px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;z-index:1}
+.search-in{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:7px 12px 7px 34px;color:var(--white);font-family:var(--Fd);font-size:13px;outline:none;transition:border-color .2s}
+.search-in:focus{border-color:rgba(0,102,255,.45)}
+.plist{flex:1;overflow-y:auto}
+.pitem{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;border-left:2px solid transparent;transition:all .15s;border-bottom:1px solid rgba(20,43,68,.4)}
+.pitem:hover{background:rgba(0,102,255,.05);border-left-color:rgba(0,102,255,.25)}
+.pitem.active{background:rgba(0,102,255,.1);border-left-color:var(--glow2)}
+.pitem.agri-active{background:rgba(34,197,94,.08);border-left-color:var(--agri)}
+.av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#003bbf,var(--glow));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;position:relative;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.av-online{position:absolute;bottom:1px;right:1px;width:9px;height:9px;background:var(--green);border-radius:50%;border:2px solid var(--surface)}
+.ib{flex:1;min-width:0}
+.ib-name{color:var(--white);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib-sub{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--Fm)}
+.ib-meta{text-align:right;flex-shrink:0}
+.ib-time{color:var(--muted);font-family:var(--Fm);font-size:10px}
+.ib-badge{background:var(--glow);color:#fff;font-size:9px;font-weight:700;border-radius:10px;padding:1px 6px;margin-top:3px;display:inline-block}
+
+/* MAIN PANE */
+.mpane{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.mphead{padding:13px 20px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.mph-left{display:flex;align-items:center;gap:12px}
+.mph-right{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:18px}
+.mph-right span{cursor:pointer;transition:color .2s}
+.mph-right span:hover{color:var(--glow2)}
+.mph-name{font-weight:700;font-size:14px}
+.mph-status{font-family:var(--Fm);font-size:11px}
+.mph-status.online{color:var(--green)}
+.mph-status.offline{color:var(--muted)}
+.mph-status.typing{color:var(--glow2)}
+
+/* MESSAGES */
+.msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px}
+.mrow{display:flex;align-items:flex-end;gap:8px}
+.mrow.me{justify-content:flex-end}
+.mbubble{max-width:65%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.5}
+.mbubble.me{background:linear-gradient(135deg,#003bbf,var(--glow));color:#fff;border-radius:18px 18px 4px 18px;box-shadow:0 4px 18px rgba(0,102,255,.3)}
+.mbubble.them{background:var(--card);border:1px solid var(--border);color:var(--white);border-radius:18px 18px 18px 4px}
+.mtime{font-family:var(--Fm);font-size:10px;opacity:.6;margin-top:4px;text-align:right}
+.msender{color:var(--glow2);font-size:11px;font-weight:700;font-family:var(--Fm);margin-bottom:2px}
+.typing-dots{display:flex;gap:4px;padding:10px 14px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--glow);animation:blink 1s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.minput-wrap{padding:10px 16px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+.minput-inner{display:flex;align-items:center;gap:8px;background:var(--card);border:1.5px solid var(--border);border-radius:22px;padding:7px 8px 7px 16px;transition:border-color .2s}
+.minput-inner:focus-within{border-color:rgba(0,102,255,.4)}
+.minput{flex:1;background:none;border:none;outline:none;color:var(--white);font-family:var(--Fd);font-size:14px}
+.minput::placeholder{color:var(--muted)}
+.mtools{display:flex;gap:5px;color:var(--muted);font-size:16px}
+.mtools span{cursor:pointer;transition:color .2s}
+.mtools span:hover{color:var(--glow2)}
+.send-btn{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#003bbf,var(--glow));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;transition:all .2s;box-shadow:0 4px 12px rgba(0,102,255,.4);flex-shrink:0}
+.send-btn:hover{transform:scale(1.1)}
+.send-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted)}
+.empty .icon{font-size:54px}
+.empty .label{font-size:16px;font-weight:700;color:var(--white)}
+.empty .hint{font-family:var(--Fm);font-size:13px}
+
+/* ─── AGRI WIDGETS ─── */
+.agri-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;padding:24px;flex:1;overflow-y:auto;align-content:start}
+.agri-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;position:relative;overflow:hidden;transition:border-color .2s}
+.agri-card:hover{border-color:rgba(34,197,94,.3)}
+.agri-card-accent{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--agri)}
+.agri-icon{font-size:28px;margin-bottom:10px}
+.agri-label{color:var(--muted);font-family:var(--Fm);font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.agri-val{font-size:28px;font-weight:800;letter-spacing:-1px;color:var(--white)}
+.agri-unit{font-size:13px;font-weight:400;color:var(--muted);margin-left:4px}
+.agri-trend{font-family:var(--Fm);font-size:11px;margin-top:6px}
+.agri-trend.up{color:var(--agri)}
+.agri-trend.down{color:#FF4466}
+.agri-trend.ok{color:var(--glow2)}
+.rec-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer;transition:all .2s;border-left:4px solid transparent}
+.rec-card:hover{border-color:rgba(34,197,94,.3)}
+.rec-card.critical{border-left-color:#FF4466}
+.rec-card.high{border-left-color:#FF9900}
+.rec-card.medium{border-left-color:var(--glow2)}
+.rec-card.low{border-left-color:var(--agri)}
+.rec-title{color:var(--white);font-size:13px;font-weight:700;margin-bottom:4px}
+.rec-desc{color:var(--muted);font-size:12px;font-family:var(--Fm);line-height:1.5}
+.rec-meta{display:flex;gap:10px;margin-top:8px;align-items:center}
+.rec-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+.rec-badge.irrigation{background:rgba(0,102,255,.15);color:var(--glow2)}
+.rec-badge.fertilizer{background:rgba(34,197,94,.15);color:var(--agri)}
+.rec-badge.pest_control{background:rgba(255,0,0,.15);color:#FF6680}
+.rec-badge.soil_health{background:rgba(255,165,0,.15);color:#FFB347}
+.rec-badge.harvest{background:rgba(255,215,0,.15);color:var(--gold)}
+.alert-item{display:flex;gap:12px;padding:13px 16px;border-bottom:1px solid rgba(20,43,68,.5);align-items:flex-start;cursor:pointer;transition:background .15s}
+.alert-item:hover{background:rgba(0,102,255,.04)}
+.alert-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.alert-dot.critical{background:#FF4466}
+.alert-dot.warning{background:#FF9900}
+.alert-dot.info{background:var(--glow2)}
+.sensor-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(20,43,68,.4);transition:background .15s}
+.sensor-row:hover{background:rgba(34,197,94,.04)}
+.sensor-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sensor-dot.active{background:var(--agri);animation:pulse 2s infinite}
+.sensor-dot.inactive{background:var(--muted)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-family:var(--Fm);font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
+.live-pill{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);border-radius:20px;padding:3px 10px;font-family:var(--Fm);font-size:11px;color:var(--green);display:inline-flex;align-items:center;gap:5px}
+.live-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+
+/* ─── AI PANEL ─── */
+.ai-welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:36px;text-align:center}
+.ai-orb{width:76px;height:76px;border-radius:50%;position:relative;margin-bottom:4px;flex-shrink:0}
+.ai-orb-ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--glow),var(--glow2),var(--agri),var(--plasma),var(--glow));animation:spin 4s linear infinite}
+.ai-orb-inner{position:absolute;inset:3px;background:var(--void);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px}
+.ai-name{font-size:26px;font-weight:800;letter-spacing:-1px}
+.ai-tag{font-family:var(--Fm);font-size:13px;color:var(--glow2)}
+.ai-chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:8px}
+.ai-chip{background:rgba(0,102,255,.08);border:1px solid rgba(0,102,255,.2);border-radius:20px;padding:5px 13px;font-family:var(--Fm);font-size:12px;color:var(--glow2);cursor:pointer;transition:all .2s}
+.ai-chip:hover{background:rgba(0,102,255,.18)}
+.ai-chip.agri{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2);color:var(--agri)}
+.ai-chip.agri:hover{background:rgba(34,197,94,.18)}
+.ai-msgs{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:12px}
+.ai-msg{display:flex;gap:10px;align-items:flex-start}
+.ai-msg.user{justify-content:flex-end}
+.ai-av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;position:relative}
+.ai-av.nova .ai-orb-ring{position:absolute;inset:0;border-radius:50%}
+.ai-av.nova .ai-orb-inner{position:absolute;inset:2px;background:var(--void);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px}
+.ai-bubble{max-width:76%;padding:11px 15px;border-radius:16px;font-size:14px;line-height:1.6}
+.ai-bubble.nova{background:var(--card);border:1px solid var(--border);color:var(--white)}
+.ai-bubble.user{background:linear-gradient(135deg,#003bbf,var(--glow));color:#fff;border-radius:16px 16px 4px 16px}
+.ai-bubble code{background:rgba(0,0,0,.3);padding:1px 5px;border-radius:4px;font-family:var(--Fm);font-size:12px}
+
+/* ─── MAIL ─── */
+.mail-layout{flex:1;display:flex;overflow:hidden}
+.mail-nav{width:200px;background:var(--surface);border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.mail-compose-btn{background:linear-gradient(135deg,#003bbf,var(--glow));border:none;border-radius:13px;padding:11px;color:#fff;font-family:var(--Fd);font-size:13px;font-weight:700;cursor:pointer;margin-bottom:14px;transition:all .2s;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.mail-compose-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(0,102,255,.4)}
+.mail-nav-btn{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);border:none;background:none;width:100%;text-align:left;transition:all .2s}
+.mail-nav-btn:hover{background:rgba(0,102,255,.08);color:var(--white)}
+.mail-nav-btn.active{background:rgba(0,102,255,.14);color:var(--glow2)}
+.mail-list{flex:1;overflow-y:auto}
+.mail-item{padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+.mail-item:hover{background:rgba(0,102,255,.04)}
+.mail-item.active{background:rgba(0,102,255,.09);border-left-color:var(--glow2)}
+.mail-item.unread .mail-from{font-weight:700;color:var(--white)}
+.mail-from{font-size:12px;font-weight:500;color:var(--white);display:flex;justify-content:space-between}
+.mail-subj{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-prev{font-size:11px;color:var(--muted);font-family:var(--Fm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-view{flex:1;overflow-y:auto;padding:26px 30px}
+.mail-subj-big{font-size:20px;font-weight:800;margin-bottom:14px}
+.mail-meta-row{display:flex;align-items:center;gap:12px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.mail-body{color:var(--white);font-size:14px;line-height:1.8;font-family:var(--Fm)}
+.compose-modal{position:fixed;bottom:18px;right:18px;width:480px;background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.8);z-index:500;display:none;flex-direction:column}
+.compose-modal.open{display:flex}
+.compose-hd{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border)}
+.compose-bd{padding:14px 18px;display:flex;flex-direction:column;gap:9px}
+.compose-f{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 13px;color:var(--white);font-family:var(--Fd);font-size:13px;outline:none;width:100%}
+.compose-f:focus{border-color:rgba(0,102,255,.4)}
+.compose-area{min-height:130px;resize:vertical}
+.compose-ft{padding:11px 18px;border-top:1px solid var(--border);display:flex;gap:8px}
+.compose-send{background:linear-gradient(135deg,#003bbf,var(--glow));border:none;border-radius:9px;padding:9px 18px;color:#fff;font-family:var(--Fd);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.compose-send:hover{transform:translateY(-1px)}
+.compose-cancel{background:none;border:1px solid var(--border);border-radius:9px;padding:9px 14px;color:var(--muted);font-family:var(--Fd);font-size:13px;cursor:pointer;transition:all .2s}
+.compose-cancel:hover{border-color:var(--muted);color:var(--white)}
+
+/* ─── STATUS ─── */
+.status-compose{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+.status-area{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px;color:var(--white);font-family:var(--Fd);font-size:14px;resize:none;outline:none;min-height:72px}
+.color-row{display:flex;gap:6px;margin-top:9px;align-items:center}
+.cdot{width:20px;height:20px;border-radius:50%;cursor:pointer;transition:transform .15s;border:2px solid transparent}
+.cdot.active,.cdot:hover{border-color:#fff;transform:scale(1.2)}
+.status-ring{width:50px;height:50px;border-radius:50%;flex-shrink:0;position:relative}
+.s-ring{position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(var(--glow),var(--glow2),var(--agri),var(--glow));animation:spin 3s linear infinite}
+.s-inner{position:absolute;inset:2px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+
+/* ─── SOCIAL ─── */
+.social-item{display:flex;align-items:center;gap:12px;padding:11px;border-radius:13px;cursor:pointer;transition:all .2s;margin-bottom:5px;border:1px solid transparent}
+.social-item:hover,.social-item.active{background:rgba(0,102,255,.07);border-color:rgba(0,102,255,.18)}
+.social-icon{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;flex-shrink:0}
+.s-name{color:var(--white);font-size:13px;font-weight:600}
+.s-conn{font-size:11px;font-family:var(--Fm)}
+.s-conn.yes{color:var(--agri)}.s-conn.no{color:var(--muted)}
+
+/* ─── PROFILE OVERLAY ─── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.profile-card{width:360px;background:var(--card);border:1px solid var(--border);border-radius:22px;padding:30px;box-shadow:0 40px 100px rgba(0,0,0,.9)}
+.profile-av-lg{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#003bbf,var(--glow));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;margin:0 auto 14px;border:3px solid rgba(0,102,255,.35)}
+.profile-menu{display:flex;flex-direction:column;gap:6px;margin-top:20px}
+.pmenu-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;cursor:pointer;transition:all .2s;color:var(--white);font-size:13px;font-weight:600;border:none;background:none;width:100%;text-align:left}
+.pmenu-item:hover{background:rgba(0,102,255,.1);color:var(--glow2)}
+.pmenu-item.danger:hover{background:rgba(255,68,102,.1);color:#FF4466}
+
+/* ─── TOAST ─── */
+.toast-box{position:fixed;top:18px;right:18px;z-index:9000;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 16px;font-size:13px;font-weight:600;color:var(--white);box-shadow:0 8px 28px rgba(0,0,0,.5);animation:slideIn .3s ease;display:flex;align-items:center;gap:8px}
+.toast.success{border-color:rgba(0,255,136,.35);color:var(--green)}
+.toast.error{border-color:rgba(255,68,102,.35);color:#FF4466}
+@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ─── ADMIN ─── */
+#adminPanel{flex-direction:row}
+.admin-rail{width:220px;background:var(--deep);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 0;flex-shrink:0}
+.admin-hd{display:flex;align-items:center;gap:9px;padding:0 16px 18px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.admin-nav{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);border:none;background:none;border-left:3px solid transparent;transition:all .2s;width:100%;text-align:left}
+.admin-nav:hover{background:rgba(124,58,237,.08);color:var(--white)}
+.admin-nav.active{background:rgba(124,58,237,.13);color:#A78BFA;border-left-color:#A78BFA}
+.admin-content{flex:1;overflow-y:auto;padding:28px 30px}
+.a-title{font-size:24px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+.a-sub{color:var(--muted);font-family:var(--Fm);font-size:12px;margin-bottom:26px}
+.stats-g{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px}
+.s-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;position:relative;overflow:hidden}
+.s-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--ac)}
+.s-icon{font-size:24px;margin-bottom:9px}
+.s-lbl{color:var(--muted);font-family:var(--Fm);font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.s-val{font-size:28px;font-weight:800;letter-spacing:-1px}
+.atbl{width:100%;border-collapse:collapse}
+.atbl th{padding:11px 14px;text-align:left;color:var(--muted);font-family:var(--Fm);font-size:10px;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border);font-weight:600}
+.atbl td{padding:12px 14px;border-bottom:1px solid rgba(20,43,68,.4);font-size:12px;vertical-align:middle}
+.atbl tr:hover td{background:rgba(124,58,237,.03)}
+.rbadge2{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px}
+.rbadge2.admin{background:rgba(124,58,237,.2);color:#A78BFA}
+.rbadge2.user{background:rgba(0,102,255,.1);color:#60a5fa}
+.odot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.odot.on{background:var(--green)}.odot.off{background:var(--muted)}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:3px;transition:color .2s}
+.del-btn:hover{color:#FF4466}
+.act-list{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.act-row{display:flex;align-items:center;gap:11px;padding:12px 16px;border-bottom:1px solid rgba(20,43,68,.4)}
+.act-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.act-txt{flex:1;color:#c0d0e0;font-size:12px}
+.act-time{color:var(--muted);font-family:var(--Fm);font-size:10px;flex-shrink:0}
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:22px}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="cursor" id="C"></div>
+<div class="cursor-ring" id="CR"></div>
+<div class="toast-box" id="toasts"></div>
+
+<!-- ════ WELCOME ════ -->
+<div class="screen active" id="welcome">
+  <div class="wc fade-in" style="position:relative;z-index:1">
+    <div class="wc-badge">🌐 UNIFIED PLATFORM v1.0</div>
+    <div class="wc-title">
+      <span class="wc-t1">UNIFIED</span>
+      <span class="wc-t2">Operating System</span>
+    </div>
+    <p class="wc-desc">Academic communication · AI assistance · Smart farming<br>Social hub · Real-time everything</p>
+    <div class="wc-modules">
+      <div class="wc-mod edu">
+        <div class="wc-mod-icon">🎓</div>
+        <div class="wc-mod-name">EduVerse</div>
+        <div class="wc-mod-desc">Chat · Mail · Status · AI Nova · Social</div>
+      </div>
+      <div class="wc-mod agri">
+        <div class="wc-mod-icon">🌾</div>
+        <div class="wc-mod-name">SmartAgri</div>
+        <div class="wc-mod-desc">IoT sensors · AI recs · Alerts · Weather</div>
+      </div>
+      <div class="wc-mod edu">
+        <div class="wc-mod-icon">🤖</div>
+        <div class="wc-mod-name">Nova AI</div>
+        <div class="wc-mod-desc">Academic + farming intelligence</div>
+      </div>
+      <div class="wc-mod agri">
+        <div class="wc-mod-icon">🛡️</div>
+        <div class="wc-mod-name">Admin Panel</div>
+        <div class="wc-mod-desc">Live monitor · All users · Full control</div>
+      </div>
+    </div>
+    <button class="btn-start" onclick="showScreen('signup')">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.4 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.6-3-11.4-7.4L6 34c3.3 6.3 10 10 18 10z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.6-2.6 4.8-4.9 6.3l6.2 5.2C40.5 36.3 44 30.6 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+      Get started with Gmail
+    </button>
+    <div class="divider"><span>have an account?</span></div>
+    <button class="btn-ghost" onclick="showScreen('signin')">Sign in</button>
+    <p style="text-align:center;margin-top:12px;font-family:var(--Fm);font-size:12px;color:var(--muted)">Admin? <span style="color:var(--glow2);cursor:pointer" onclick="showScreen('adminLogin')">Admin login →</span></p>
+  </div>
+</div>
+
+<!-- ════ SIGN UP ════ -->
+<div class="screen" id="signup">
+  <div class="auth-box fade-in" style="position:relative;z-index:1">
+    <div class="auth-logo">🌐</div>
+    <div class="auth-title">Create account</div>
+    <div class="auth-sub">// join the unified platform</div>
+    <div class="badge-info"><div class="badge-ttl">Gmail Required</div><div class="badge-txt">Only @gmail.com addresses accepted. Google handles authentication.</div></div>
+    <span class="lbl">Full Name</span>
+    <div class="fi"><span class="fi-icon">👤</span><input id="su-name" class="fi-input" type="text" placeholder="Your full name"/></div>
+    <div id="su-ne" class="ferr"></div>
+    <span class="lbl">Gmail Address</span>
+    <div class="fi"><span class="fi-icon">✉️</span><input id="su-email" class="fi-input" type="email" placeholder="you@gmail.com"/></div>
+    <div id="su-ee" class="ferr"></div>
+    <div class="secure">🔒 No password required — secured via Google OAuth 2.0</div>
+    <button class="btn-cta" onclick="handleSignup()">
+      <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.4 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.6-3-11.4-7.4L6 34c3.3 6.3 10 10 18 10z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.6-2.6 4.8-4.9 6.3l6.2 5.2C40.5 36.3 44 30.6 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+      Continue with Google
+    </button>
+    <p class="auth-sw">Already a member? <a onclick="showScreen('signin')">Sign in →</a></p>
+  </div>
+</div>
+
+<!-- ════ SIGN IN ════ -->
+<div class="screen" id="signin">
+  <div class="auth-box fade-in" style="position:relative;z-index:1">
+    <div class="auth-logo">🌐</div>
+    <div class="auth-title">Welcome back 👋</div>
+    <div class="auth-sub">// sign in to unified OS</div>
+    <span class="lbl">Gmail Address</span>
+    <div class="fi"><span class="fi-icon">✉️</span><input id="si-email" class="fi-input" type="email" placeholder="you@gmail.com" onkeydown="if(event.key==='Enter')handleSignin()"/></div>
+    <div id="si-err" class="ferr"></div>
+    <button class="btn-cta" onclick="handleSignin()" style="margin-top:18px">
+      <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.4 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.6-3-11.4-7.4L6 34c3.3 6.3 10 10 18 10z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.6-2.6 4.8-4.9 6.3l6.2 5.2C40.5 36.3 44 30.6 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+      Continue with Google
+    </button>
+    <div class="divider"><span>new here?</span></div>
+    <button class="btn-ghost" onclick="showScreen('signup')">Create account</button>
+  </div>
+</div>
+
+<!-- ════ ADMIN LOGIN ════ -->
+<div class="screen" id="adminLogin">
+  <div class="auth-box fade-in" style="position:relative;z-index:1">
+    <div class="auth-logo" style="background:linear-gradient(135deg,#4a1060,#8B5CF6)">🛡️</div>
+    <div class="auth-title">Admin Access</div>
+    <div class="auth-sub">// restricted — unified platform control</div>
+    <span class="lbl">Admin Email</span>
+    <div class="fi"><span class="fi-icon">👤</span><input id="al-email" class="fi-input" type="email" value="admin@platform.app"/></div>
+    <span class="lbl">Password</span>
+    <div class="fi"><span class="fi-icon">🔑</span><input id="al-pass" class="fi-input" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleAdminLogin()"/></div>
+    <div id="al-err" class="ferr" style="margin:8px 0"></div>
+    <button class="btn-cta" onclick="handleAdminLogin()" style="background:linear-gradient(135deg,#4a1060,#8B5CF6);box-shadow:0 8px 28px rgba(139,92,246,.4)">🛡️ Enter Admin Panel</button>
+    <p class="auth-sw" style="margin-top:12px"><a onclick="showScreen('welcome')">← Back</a></p>
+  </div>
+</div>
+
+<!-- ════ LOADING ════ -->
+<div class="screen" id="loading" style="background:var(--void)">
+  <div class="loader"></div>
+  <div class="load-txt" id="loadTxt">Connecting…</div>
+  <div class="load-sub" id="loadSub"></div>
+</div>
+
+<!-- ════ MAIN APP ════ -->
+<div class="screen" id="app">
+  <nav class="rail">
+    <div class="rail-logo" onclick="toggleProfile()">🌐</div>
+    <!-- EduVerse -->
+    <button class="rail-btn active" id="nav-chat"   onclick="setTab('chat')"   title="Chat">💬</button>
+    <button class="rail-btn"        id="nav-mail"   onclick="setTab('mail')"   title="Mail">📧<span class="rbadge" id="mailBadge" style="display:none">0</span></button>
+    <button class="rail-btn"        id="nav-status" onclick="setTab('status')" title="Status">🔵</button>
+    <button class="rail-btn"        id="nav-social" onclick="setTab('social')" title="Social Hub">🌐</button>
+    <button class="rail-btn"        id="nav-ai"     onclick="setTab('ai')"     title="Nova AI">🤖</button>
+    <div class="rail-sep"></div>
+    <!-- SmartAgri -->
+    <button class="rail-btn agri-btn" id="nav-farm"    onclick="setTab('farm')"    title="Farm Dashboard">🌾</button>
+    <button class="rail-btn agri-btn" id="nav-sensors" onclick="setTab('sensors')" title="Sensors">📡</button>
+    <button class="rail-btn agri-btn" id="nav-alerts"  onclick="setTab('alerts')"  title="Alerts">🚨<span class="rbadge" id="alertBadge" style="display:none">0</span></button>
+    <button class="rail-btn agri-btn" id="nav-recs"    onclick="setTab('recs')"    title="AI Recommendations">💡</button>
+    <div class="rail-space"></div>
+    <button class="rail-btn" onclick="showScreen('adminPanel')" title="Admin">🛡️</button>
+    <div class="rail-av" id="userAv" onclick="toggleProfile()">?</div>
+  </nav>
+  <div class="panel" id="panel"></div>
+  <div class="mpane" id="mpane"><div class="empty"><div class="icon">🌐</div><div class="label">Unified OS</div><div class="hint">Select a tab to begin</div></div></div>
+</div>
+
+<!-- ════ ADMIN PANEL ════ -->
+<div class="screen" id="adminPanel">
+  <div class="admin-rail">
+    <div class="admin-hd">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#4a1060,#8B5CF6);border-radius:8px;display:flex;align-items:center;justify-content:center">🌐</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--white)">UnifiedOS</div><div style="font-family:var(--Fm);font-size:10px;color:#A78BFA">Admin</div></div>
+    </div>
+    <button class="admin-nav active" id="an-dashboard" onclick="adminTab('dashboard')">📊 Dashboard</button>
+    <button class="admin-nav" id="an-live"     onclick="adminTab('live')">🔴 Live Monitor</button>
+    <button class="admin-nav" id="an-users"    onclick="adminTab('users')">👥 Users</button>
+    <button class="admin-nav" id="an-messages" onclick="adminTab('messages')">💬 Messages</button>
+    <button class="admin-nav" id="an-activity" onclick="adminTab('activity')">📋 Activity Log</button>
+    <button class="admin-nav" id="an-agri"     onclick="adminTab('agri')">🌾 Farm Stats</button>
+    <div style="flex:1"></div>
+    <button class="admin-nav" onclick="showScreen('app')" style="color:#FF4466">← Back to App</button>
+  </div>
+  <div class="admin-content" id="adminContent"><div style="color:var(--muted);font-family:var(--Fm)">Loading…</div></div>
+</div>
+
+<!-- PROFILE OVERLAY -->
+<div class="overlay" id="profileOverlay" onclick="if(event.target===this)toggleProfile()">
+  <div class="profile-card">
+    <div class="profile-av-lg" id="pAvLg">?</div>
+    <div style="text-align:center;font-size:18px;font-weight:700;margin-bottom:4px" id="pName">User</div>
+    <div style="text-align:center;font-family:var(--Fm);font-size:12px;color:var(--muted);margin-bottom:4px" id="pEmail">email@gmail.com</div>
+    <div style="text-align:center;margin-bottom:4px"><span class="stat-pill">🌾 SmartAgri + 🎓 EduVerse</span></div>
+    <div class="profile-menu">
+      <button class="pmenu-item" onclick="toggleProfile()">👤 Edit Profile</button>
+      <button class="pmenu-item" onclick="toggleProfile()">⚙️ Settings</button>
+      <button class="pmenu-item" onclick="showScreen('adminPanel');toggleProfile()">🛡️ Admin Panel</button>
+      <button class="pmenu-item danger" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIL COMPOSE -->
+<div class="compose-modal" id="composeModal">
+  <div class="compose-hd"><span style="font-weight:700;font-size:13px">✉️ New Message</span><button onclick="closeCompose()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button></div>
+  <div class="compose-bd">
+    <input id="mc-to"   class="compose-f" placeholder="To (name or email)…"/>
+    <input id="mc-subj" class="compose-f" placeholder="Subject"/>
+    <textarea id="mc-body" class="compose-f compose-area" placeholder="Write your message…"></textarea>
+  </div>
+  <div class="compose-ft">
+    <button class="compose-send" onclick="sendMail()">Send ➤</button>
+    <button class="compose-cancel" onclick="closeCompose()">Discard</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════ STARS ════════════════════
+(()=>{
+  const c=document.getElementById('stars'),x=c.getContext('2d');
+  let s=[];
+  const R=()=>{c.width=innerWidth;c.height=innerHeight;s=Array.from({length:200},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.4+.2,o:Math.random()*.6+.1,sp:Math.random()*.25+.04}))};
+  const D=()=>{x.clearRect(0,0,c.width,c.height);s.forEach(v=>{v.o+=v.sp*(Math.random()>.5?1:-1);v.o=Math.max(.05,Math.min(.75,v.o));x.beginPath();x.arc(v.x,v.y,v.r,0,Math.PI*2);x.fillStyle=`rgba(140,210,255,${v.o})`;x.fill()});requestAnimationFrame(D)};
+  R();addEventListener('resize',R);D();
+})();
+
+// ════════════════════ CURSOR ════════════════════
+(()=>{
+  const c=document.getElementById('C'),r=document.getElementById('CR');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;c.style.left=(mx-4.5)+'px';c.style.top=(my-4.5)+'px'});
+  const a=()=>{rx+=(mx-rx)*.12;ry+=(my-ry)*.12;r.style.left=(rx-17)+'px';r.style.top=(ry-17)+'px';requestAnimationFrame(a)};a();
+})();
+
+// ════════════════════ STATE ════════════════════
+const N = window.PLATFORM_CONFIG?.NODE_API   || 'http://localhost:5000';
+const P = window.PLATFORM_CONFIG?.PYTHON_API || 'http://localhost:5001';
+let S={
+  token: localStorage.getItem('up_token'),
+  user:  JSON.parse(localStorage.getItem('up_user')||'null'),
+  tab: 'chat', socket:null, activeConvo:null,
+  convos:[], users:[], aiMsgs:[], mailTab:'inbox', activeSocial:null,
+  adminTab:'dashboard', statusColor:'#0066FF', statusComposing:false,
+  agriData:{ farms:[], activeFarm:null, sensors:[], alerts:[], recs:[] }
+};
+
+const ini=n=>n?.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()||'?';
+const fmt=d=>new Date(d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const ago=d=>{const m=Math.round((Date.now()-new Date(d))/60000);return m<60?m+'m ago':Math.round(m/60)+'h ago'};
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id)?.classList.add('active')}
+function toast(msg,type='success'){const t=document.createElement('div');t.className=`toast ${type}`;t.innerHTML=(type==='success'?'✅ ':'❌ ')+msg;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),3500)}
+
+async function api(base,path,opts={}){
+  const res=await fetch(base+path,{headers:{'Content-Type':'application/json',...(S.token?{Authorization:`Bearer ${S.token}`}:{}),...(opts.headers||{})},method:opts.method||'GET',...(opts.body?{body:JSON.stringify(opts.body)}:{})});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error||e.message||res.statusText)}
+  return res.json();
+}
+const napi=(path,opts)=>api(N,path,opts);
+const papi=(path,opts)=>api(P,path,opts);
+
+// ════════════════════ AUTH ════════════════════
+function handleSignup(){
+  const name=document.getElementById('su-name').value.trim();
+  const email=document.getElementById('su-email').value.trim().toLowerCase();
+  let ok=true;
+  ['su-ne','su-ee'].forEach(id=>document.getElementById(id).style.display='none');
+  if(name.length<2){show('su-ne','Enter your full name');ok=false}
+  if(!email){show('su-ee','Gmail required');ok=false}
+  else if(!email.endsWith('@gmail.com')){show('su-ee','Must be @gmail.com');ok=false}
+  if(!ok)return;
+  doLoad('Verifying with Google…',email);
+  setTimeout(()=>doAuth(name,email),1800);
+}
+function handleSignin(){
+  const email=document.getElementById('si-email').value.trim().toLowerCase();
+  document.getElementById('si-err').style.display='none';
+  if(!email.endsWith('@gmail.com')){show('si-err','Must be @gmail.com');return}
+  const name=email.split('@')[0].replace(/[._\-0-9]+/g,' ').trim().replace(/\b\w/g,c=>c.toUpperCase());
+  doLoad('Signing you in…',email);
+  setTimeout(()=>doAuth(name,email),1800);
+}
+async function doAuth(name,email){
+  document.getElementById('loadTxt').textContent='Creating your account…';
+  try{
+    const data=await napi('/api/auth/google',{method:'POST',body:{name,email}});
+    loginOK(data);
+  }catch(e){toast('Auth failed: '+e.message,'error');showScreen('welcome')}
+}
+async function handleAdminLogin(){
+  const email=document.getElementById('al-email').value.trim();
+  const pass=document.getElementById('al-pass').value;
+  document.getElementById('al-err').style.display='none';
+  doLoad('Authenticating…',email);
+  try{
+    const data=await napi('/api/auth/admin/login',{method:'POST',body:{email,password:pass}});
+    loginOK(data);
+    setTimeout(()=>{showScreen('adminPanel');adminTab('dashboard')},300);
+  }catch(e){showScreen('adminLogin');show('al-err',e.message)}
+}
+function show(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.display='block'}}
+function doLoad(txt,sub){document.getElementById('loadTxt').textContent=txt;document.getElementById('loadSub').textContent=sub||'';showScreen('loading')}
+function loginOK({token,user}){S.token=token;S.user=user;localStorage.setItem('up_token',token);localStorage.setItem('up_user',JSON.stringify(user));initApp()}
+function logout(){S.token=null;S.user=null;localStorage.removeItem('up_token');localStorage.removeItem('up_user');if(S.socket){S.socket.disconnect();S.socket=null}document.getElementById('profileOverlay').classList.remove('open');showScreen('welcome');toast('Signed out')}
+
+// ════════════════════ APP INIT ════════════════════
+function initApp(){
+  const av=ini(S.user?.name);
+  document.getElementById('userAv').textContent=av;
+  document.getElementById('pAvLg').textContent=av;
+  document.getElementById('pName').textContent=S.user?.name||'User';
+  document.getElementById('pEmail').textContent=S.user?.email||'';
+  try{
+    S.socket=io(N,{auth:{token:S.token},transports:['websocket','polling']});
+    S.socket.on('new_message',msg=>{if(S.activeConvo&&msg.conversation===S.activeConvo._id)appendMsg(msg);loadConvos()});
+    S.socket.on('user_typing',({userId,conversationId})=>{if(S.activeConvo?._id===conversationId)showTyping()});
+    S.socket.on('user_stop_typing',()=>hideTyping());
+    S.socket.on('new_mail',({from,subject})=>toast(`📧 Mail from ${from?.name}: ${subject}`));
+  }catch(e){console.warn('Socket:',e)}
+  showScreen('app');
+  setTab('chat');
+  loadConvos();loadUsers();loadAgriData();
+}
+if(S.token&&S.user)initApp();
+
+// ════════════════════ TABS ════════════════════
+function setTab(tab){
+  S.tab=tab;
+  document.querySelectorAll('.rail-btn[id^="nav-"]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-'+tab)?.classList.add('active');
+  switch(tab){
+    case 'chat':    renderChatPanel();    break;
+    case 'mail':    renderMailPanel();    break;
+    case 'status':  renderStatusPanel();  break;
+    case 'social':  renderSocialPanel();  break;
+    case 'ai':      renderAIPanel();      break;
+    case 'farm':    renderFarmPanel();    break;
+    case 'sensors': renderSensorsPanel(); break;
+    case 'alerts':  renderAlertsPanel();  break;
+    case 'recs':    renderRecsPanel();    break;
+  }
+}
+
+// ════════════════════ CHAT ════════════════════
+const DEMO_CONVOS=[
+  {_id:'c1',participants:[{_id:'u1',name:'Amara Osei',isOnline:true}],lastMessage:{content:'Did you finish the assignment?'},lastActivity:new Date()},
+  {_id:'c2',isGroup:true,groupName:'Study Group 📚',participants:[{_id:'u1'},{_id:'u2'},{_id:'u3'}],lastMessage:{content:'Meeting at 3pm!'},lastActivity:new Date()},
+  {_id:'c3',participants:[{_id:'u3',name:'Priya Sharma',isOnline:true}],lastMessage:{content:'Can you share slides?'},lastActivity:new Date()},
+];
+const DEMO_MSGS={c1:[
+  {_id:'m1',sender:{_id:'u1',name:'Amara Osei'},content:'Hey! Coming to lecture today?',createdAt:new Date(Date.now()-600000)},
+  {_id:'m2',sender:{_id:'me'},content:'Yes, leaving in 10 mins 🏃',createdAt:new Date(Date.now()-580000)},
+  {_id:'m3',sender:{_id:'u1',name:'Amara Osei'},content:'Did you finish the assignment?',createdAt:new Date(Date.now()-300000)},
+]};
+
+async function loadConvos(){
+  try{S.convos=await napi('/api/chat/conversations')}catch{S.convos=DEMO_CONVOS}
+  if(S.tab==='chat')renderChatPanel();
+}
+async function loadUsers(){
+  try{S.users=await napi('/api/users')}catch{S.users=[{_id:'u1',name:'Amara Osei',email:'amara@gmail.com',isOnline:true},{_id:'u2',name:'Kwame Mensah',email:'kwame@gmail.com',isOnline:false},{_id:'u3',name:'Priya Sharma',email:'priya@gmail.com',isOnline:true}]}
+}
+
+function renderChatPanel(){
+  const convos=S.convos.length?S.convos:DEMO_CONVOS;
+  document.getElementById('panel').innerHTML=`
+    <div class="ph"><span class="ph-title">Messages</span><div class="ph-action" onclick="newChatPane()">✏️</div></div>
+    <div class="search-wrap"><input class="search-in" placeholder="Search…" oninput="filterConvos(this.value)"/></div>
+    <div class="plist" id="cList">${convos.map(renderConvoItem).join('')}</div>
+  `;
+  if(!S.activeConvo&&convos.length)openConvo(convos[0]);
+}
+
+function renderConvoItem(c){
+  const other=c.participants?.find(p=>p._id!==S.user?.id&&p._id!=='me');
+  const name=c.isGroup?c.groupName:(other?.name||'Chat');
+  const online=!c.isGroup&&other?.isOnline;
+  const active=S.activeConvo?._id===c._id;
+  return `<div class="pitem${active?' active':''}" onclick='openConvo(${JSON.stringify(c)})'>
+    <div class="av">${ini(name)}${online?'<div class="av-online"></div>':''}</div>
+    <div class="ib"><div class="ib-name">${name}</div><div class="ib-sub">${(c.lastMessage?.content||'').slice(0,32)}…</div></div>
+  </div>`;
+}
+function filterConvos(q){
+  const f=(S.convos.length?S.convos:DEMO_CONVOS).filter(c=>{const n=c.isGroup?c.groupName:(c.participants?.find(p=>p._id!==S.user?.id)?.name||'');return n.toLowerCase().includes(q.toLowerCase())});
+  document.getElementById('cList').innerHTML=f.map(renderConvoItem).join('');
+}
+
+let typTO;
+async function openConvo(c){
+  S.activeConvo=c;
+  S.socket?.emit('join_conversation',c._id);
+  renderChatPanel();
+  const other=c.participants?.find(p=>p._id!==S.user?.id&&p._id!=='me');
+  const name=c.isGroup?c.groupName:(other?.name||'Chat');
+  const online=!c.isGroup&&other?.isOnline;
+  document.getElementById('mpane').innerHTML=`
+    <div class="mphead">
+      <div class="mph-left">
+        <div class="av" style="width:38px;height:38px;font-size:12px">${ini(name)}</div>
+        <div><div class="mph-name">${name}</div><div class="mph-status ${online?'online':'offline'}" id="pStat">${online?'● Online':'Last seen recently'}</div></div>
+      </div>
+      <div class="mph-right"><span>📞</span><span>📹</span><span>⋯</span></div>
+    </div>
+    <div class="msgs" id="msgArea"></div>
+    <div class="minput-wrap">
+      <div class="minput-inner">
+        <span class="mtools"><span>😊</span><span>📎</span></span>
+        <input class="minput" id="mIn" placeholder="Type a message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}" oninput="handleTyping()"/>
+        <button class="send-btn" id="sBtn" onclick="sendMsg()" disabled>➤</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('mIn').addEventListener('input',e=>{document.getElementById('sBtn').disabled=!e.target.value.trim()});
+  let msgs=DEMO_MSGS[c._id]||[];
+  try{msgs=await napi(`/api/chat/conversations/${c._id}/messages`)}catch{}
+  msgs.forEach(appendMsg);
+  document.getElementById('msgArea').scrollTop=99999;
+}
+
+function appendMsg(msg){
+  const area=document.getElementById('msgArea');if(!area)return;
+  const me=msg.sender?._id===S.user?.id||msg.sender?._id==='me';
+  const name=me?'You':(msg.sender?.name||'User');
+  const row=document.createElement('div');
+  row.className=`mrow ${me?'me':'them'}`;
+  row.innerHTML=`
+    ${!me?`<div class="av" style="width:26px;height:26px;font-size:9px">${ini(name)}</div>`:''}
+    <div>
+      ${(c?.isGroup&&!me)?`<div class="msender">${name}</div>`:''}
+      <div class="mbubble ${me?'me':'them'}">${msg.content}<div class="mtime">${fmt(msg.createdAt||new Date())}${me?' ✓✓':''}</div></div>
+    </div>
+  `;
+  area.appendChild(row);area.scrollTop=99999;
+}
+
+let typTimer;
+function handleTyping(){
+  if(!S.socket||!S.activeConvo)return;
+  S.socket.emit('typing',{conversationId:S.activeConvo._id});
+  clearTimeout(typTO);
+  typTO=setTimeout(()=>S.socket.emit('stop_typing',{conversationId:S.activeConvo._id}),1500);
+}
+function showTyping(){const s=document.getElementById('pStat');if(s){s.className='mph-status typing';s.textContent='✍️ typing…'};clearTimeout(typTimer);typTimer=setTimeout(hideTyping,2000)}
+function hideTyping(){const s=document.getElementById('pStat');if(s){s.className='mph-status '+(S.activeConvo?.participants?.find(p=>p._id!==S.user?.id)?.isOnline?'online':'offline');s.textContent=s.className.includes('online')?'● Online':'Last seen recently'}}
+
+async function sendMsg(){
+  const inp=document.getElementById('mIn');if(!inp||!inp.value.trim())return;
+  const content=inp.value.trim();inp.value='';document.getElementById('sBtn').disabled=true;
+  appendMsg({_id:'t'+Date.now(),sender:{_id:S.user?.id||'me'},content,createdAt:new Date()});
+  if(!S.activeConvo)return;
+  try{await napi(`/api/chat/conversations/${S.activeConvo._id}/messages`,{method:'POST',body:{content}})}
+  catch{setTimeout(()=>appendMsg({_id:'r'+Date.now(),sender:{_id:'u1',name:'Amara Osei'},content:'Got it! 👍',createdAt:new Date()}),1200)}
+}
+
+function newChatPane(){
+  document.getElementById('mpane').innerHTML=`
+    <div style="padding:28px;max-width:480px">
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:18px">Start New Chat</h2>
+      <div class="search-wrap" style="padding:0;margin-bottom:14px"><input class="search-in" placeholder="Search users…" oninput="searchUsers(this.value)" style="width:100%"/></div>
+      <div id="uRes">${(S.users.length?S.users:[{_id:'u1',name:'Amara Osei',email:'amara@gmail.com',isOnline:true}]).map(u=>`<div class="pitem" onclick="openDM('${u._id}','${u.name}','${u.isOnline}')"><div class="av">${ini(u.name)}</div><div class="ib"><div class="ib-name">${u.name}</div><div class="ib-sub">${u.email}</div></div></div>`).join('')}</div>
+    </div>
+  `;
+}
+function searchUsers(q){const f=(S.users.length?S.users:[]).filter(u=>u.name.toLowerCase().includes(q.toLowerCase())||u.email.toLowerCase().includes(q.toLowerCase()));document.getElementById('uRes').innerHTML=f.map(u=>`<div class="pitem" onclick="openDM('${u._id}','${u.name}','${u.isOnline}')"><div class="av">${ini(u.name)}</div><div class="ib"><div class="ib-name">${u.name}</div><div class="ib-sub">${u.email}</div></div></div>`).join('')}
+async function openDM(uid,name,online){
+  try{const c=await napi('/api/chat/conversations',{method:'POST',body:{participantId:uid}});openConvo(c)}
+  catch{openConvo({_id:'dm_'+uid,participants:[{_id:uid,name,isOnline:online==='true'}],lastMessage:null,lastActivity:new Date()})}
+}
+
+// ════════════════════ MAIL ════════════════════
+const DEMO_MAILS=[
+  {_id:'ml1',from:{name:'Amara Osei',email:'amara@gmail.com'},subject:'Assignment deadline extended! 📅',body:'Great news — deadline extended to next Friday.',createdAt:new Date(Date.now()-7200000),readBy:[]},
+  {_id:'ml2',from:{name:'Prof. Johnson',email:'prof@university.edu'},subject:'Lecture notes for Chapter 5',body:'Please find attached the lecture notes. Quiz is Monday.',createdAt:new Date(Date.now()-86400000),readBy:['me']},
+];
+
+function renderMailPanel(){
+  document.getElementById('panel').innerHTML=`
+    <div class="ph"><span class="ph-title">Mail</span></div>
+    <div style="padding:10px">
+      <button class="mail-compose-btn" onclick="openCompose()">✏️ Compose</button>
+      <button class="mail-nav-btn ${S.mailTab==='inbox'?'active':''}" onclick="switchMailTab('inbox')">📥 Inbox</button>
+      <button class="mail-nav-btn ${S.mailTab==='sent'?'active':''}" onclick="switchMailTab('sent')">📤 Sent</button>
+      <button class="mail-nav-btn ${S.mailTab==='starred'?'active':''}" onclick="switchMailTab('starred')">⭐ Starred</button>
+    </div>
+    <div class="plist" id="mList">${DEMO_MAILS.map(m=>renderMailItem(m)).join('')}</div>
+  `;
+  renderMailView(DEMO_MAILS[0]);
+}
+function renderMailItem(m){
+  const u=!m.readBy?.includes('me')&&!m.readBy?.includes(S.user?.id);
+  return `<div class="mail-item${u?' unread':''}" onclick='renderMailView(${JSON.stringify(m)})'>
+    <div class="mail-from">${m.from?.name||'Unknown'}<span style="font-family:var(--Fm);font-size:10px;color:var(--muted)">${fmt(m.createdAt)}</span></div>
+    <div class="mail-subj">${m.subject}</div>
+    <div class="mail-prev">${m.body?.slice(0,50)}…</div>
+  </div>`;
+}
+function renderMailView(mail){
+  if(!mail)return;
+  document.getElementById('mpane').innerHTML=`
+    <div class="mail-view">
+      <div class="mail-subj-big">${mail.subject}</div>
+      <div class="mail-meta-row">
+        <div class="av" style="width:36px;height:36px;font-size:12px">${ini(mail.from?.name||'?')}</div>
+        <div><div style="font-size:14px;font-weight:600">${mail.from?.name}</div><div style="font-family:var(--Fm);font-size:12px;color:var(--muted)">${mail.from?.email}</div></div>
+        <div style="margin-left:auto;font-family:var(--Fm);font-size:12px;color:var(--muted)">${new Date(mail.createdAt).toLocaleString()}</div>
+      </div>
+      <div class="mail-body">${mail.body}</div>
+      <div style="margin-top:28px;display:flex;gap:10px">
+        <button onclick="openCompose()" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 18px;color:var(--white);font-family:var(--Fd);font-size:13px;font-weight:600;cursor:pointer">↩ Reply</button>
+        <button onclick="openCompose()" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 18px;color:var(--white);font-family:var(--Fd);font-size:13px;font-weight:600;cursor:pointer">↪ Forward</button>
+      </div>
+    </div>
+  `;
+}
+function switchMailTab(t){S.mailTab=t;renderMailPanel()}
+function openCompose(){document.getElementById('composeModal').classList.add('open')}
+function closeCompose(){document.getElementById('composeModal').classList.remove('open')}
+async function sendMail(){
+  const subj=document.getElementById('mc-subj').value;
+  const body=document.getElementById('mc-body').value;
+  if(!body){toast('Write a message first','error');return}
+  try{await napi('/api/mail/send',{method:'POST',body:{to:[],subject:subj,body}})}catch{}
+  toast('Message sent! 📧');closeCompose();
+  ['mc-to','mc-subj','mc-body'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ════════════════════ STATUS ════════════════════
+const DEMO_STATUSES=[
+  {_id:'s1',user:{name:'Amara Osei'},content:'Library until 6pm 📖',bgColor:'#0055DD',createdAt:new Date(Date.now()-120000),viewers:Array(12).fill('x')},
+  {_id:'s2',user:{name:'Kwame Mensah'},content:'Just aced the math test! 🎉',bgColor:'#009955',createdAt:new Date(Date.now()-3600000),viewers:Array(34).fill('x')},
+  {_id:'s3',user:{name:'Priya Sharma'},content:'Working on the group project',bgColor:'#7733CC',createdAt:new Date(Date.now()-10800000),viewers:Array(8).fill('x')},
+];
+function renderStatusPanel(){
+  document.getElementById('panel').innerHTML=`
+    <div class="ph"><span class="ph-title">Status</span>
+      <select class="ph-action" style="font-size:11px;font-family:var(--Fm);color:var(--muted);background:var(--card)">
+        <option>👁 Everyone</option><option selected>👥 Contacts</option><option>🔒 Nobody</option>
+      </select>
+    </div>
+    <div class="plist">${DEMO_STATUSES.map(s=>`<div class="pitem" onclick="viewStatus('${s._id}')">
+      <div class="status-ring"><div class="s-ring"></div><div class="s-inner" style="background:${s.bgColor}">${ini(s.user.name)}</div></div>
+      <div class="ib"><div class="ib-name">${s.user.name}</div><div class="ib-sub">${s.content.slice(0,28)}…</div></div>
+    </div>`).join('')}</div>
+  `;
+  renderStatusMain();
+}
+function renderStatusMain(){
+  const pane=document.getElementById('mpane');
+  const colors=['#0055DD','#009955','#7733CC','#CC6600','#CC2244','#0099AA'];
+  pane.innerHTML=`<div style="padding:24px;max-width:540px;margin:0 auto">
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:18px">Status Updates</h2>
+    <div class="status-compose">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:${S.statusComposing?'14px':'0'}">
+        <div style="width:50px;height:50px;border-radius:50%;border:2px dashed rgba(0,102,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--glow2);cursor:pointer" onclick="S.statusComposing=!S.statusComposing;renderStatusMain()">+</div>
+        <div><div style="color:var(--white);font-size:14px;font-weight:600">My Status</div><div style="color:var(--muted);font-size:12px;font-family:var(--Fm)">Post an update</div></div>
+      </div>
+      ${S.statusComposing?`<textarea class="status-area" id="sTxt" placeholder="What's on your mind?"></textarea>
+      <div class="color-row">${colors.map(c=>`<div class="cdot${c===S.statusColor?' active':''}" style="background:${c}" onclick="S.statusColor='${c}';renderStatusMain()"></div>`).join('')}
+        <div style="flex:1"></div>
+        <button onclick="S.statusComposing=false;renderStatusMain()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--muted);cursor:pointer;font-size:12px">Cancel</button>
+        <button onclick="postStatus()" style="background:linear-gradient(135deg,#003bbf,var(--glow));border:none;border-radius:8px;padding:5px 14px;color:#fff;cursor:pointer;font-size:12px;font-weight:700;margin-left:6px">Post</button>
+      </div>`:''}
+    </div>
+    ${DEMO_STATUSES.map(s=>`<div style="display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .2s" onclick="viewStatus('${s._id}')">
+      <div class="status-ring"><div class="s-ring"></div><div class="s-inner" style="background:${s.bgColor}">${ini(s.user.name)}</div></div>
+      <div style="flex:1"><div style="color:var(--white);font-size:14px;font-weight:600">${s.user.name}</div><div style="color:var(--muted);font-size:13px">${s.content}</div><div style="color:var(--muted);font-family:var(--Fm);font-size:11px;margin-top:3px">${ago(s.createdAt)}</div></div>
+      <div style="color:var(--muted);font-size:12px">👁 ${s.viewers.length}</div>
+    </div>`).join('')}
+  </div>`;
+}
+async function postStatus(){
+  const c=document.getElementById('sTxt')?.value.trim();
+  if(!c){toast('Write something first','error');return}
+  try{await napi('/api/status',{method:'POST',body:{content:c,bgColor:S.statusColor}})}catch{}
+  S.statusComposing=false;toast('Status posted! 🔵');renderStatusMain();
+}
+function viewStatus(id){
+  const s=DEMO_STATUSES.find(s=>s._id===id);if(!s)return;
+  document.getElementById('mpane').innerHTML=`<div style="padding:28px;max-width:460px;margin:0 auto">
+    <div style="border-radius:22px;padding:40px;background:${s.bgColor};text-align:center;margin-bottom:22px;position:relative"><div style="font-size:22px;font-weight:700;color:#fff;position:relative;z-index:1">${s.content}</div></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+      <div class="av" style="width:42px;height:42px">${ini(s.user.name)}</div>
+      <div><div style="font-weight:600">${s.user.name}</div><div style="font-family:var(--Fm);font-size:12px;color:var(--muted)">${ago(s.createdAt)}</div></div>
+      <div style="margin-left:auto;font-family:var(--Fm);font-size:12px;color:var(--muted)">👁 ${s.viewers.length} views</div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════ SOCIAL ════════════════════
+const PLATFORMS=[
+  {key:'tiktok',name:'TikTok',emoji:'🎵',grad:'linear-gradient(135deg,#010101,#69C9D0)'},
+  {key:'instagram',name:'Instagram',emoji:'📸',grad:'linear-gradient(135deg,#833AB4,#FD1D1D,#FCAF45)'},
+  {key:'twitter',name:'X / Twitter',emoji:'𝕏',grad:'linear-gradient(135deg,#111,#14171A)'},
+  {key:'snapchat',name:'Snapchat',emoji:'👻',grad:'linear-gradient(135deg,#FFFC00,#FFC300)'},
+  {key:'facebook',name:'Facebook',emoji:'f',grad:'linear-gradient(135deg,#1877F2,#0C52B3)'},
+  {key:'youtube',name:'YouTube',emoji:'▶️',grad:'linear-gradient(135deg,#FF0000,#CC0000)'},
+];
+let socialConn={};
+async function loadSocialStatus(){try{socialConn=await napi('/api/social/status')}catch{socialConn={instagram:true,twitter:true}}}
+function renderSocialPanel(){
+  document.getElementById('panel').innerHTML=`
+    <div class="ph"><span class="ph-title">Social Hub</span></div>
+    <div style="padding:10px">${PLATFORMS.map(p=>`<div class="social-item${S.activeSocial?.key===p.key?' active':''}" onclick="openSocial('${p.key}')">
+      <div class="social-icon" style="background:${p.grad};${p.key==='snapchat'?'color:#000':''}">${p.emoji}</div>
+      <div><div class="s-name">${p.name}</div><div class="s-conn ${socialConn[p.key]?'yes':'no'}">${socialConn[p.key]?'● Connected':'○ Connect'}</div></div>
+    </div>`).join('')}</div>
+  `;
+  if(!S.activeSocial)document.getElementById('mpane').innerHTML=`<div class="empty"><div class="icon">🌐</div><div class="label">Social Hub</div><div class="hint">All your platforms — unblocked inside the app 🔓</div></div>`;
+}
+function openSocial(key){
+  S.activeSocial=PLATFORMS.find(p=>p.key===key);renderSocialPanel();
+  const p=S.activeSocial,conn=socialConn[key];
+  document.getElementById('mpane').innerHTML=`<div style="padding:24px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+      <div style="width:52px;height:52px;border-radius:16px;background:${p.grad};display:flex;align-items:center;justify-content:center;font-size:26px">${p.emoji}</div>
+      <div><div style="font-size:20px;font-weight:800">${p.name}</div><div style="font-size:12px;font-family:var(--Fm);color:${conn?'var(--agri)':'var(--muted)'}">${conn?'● Connected':'○ Not connected'}</div></div>
+      ${conn?`<button onclick="disconnectSocial('${key}')" style="margin-left:auto;background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.3);border-radius:10px;padding:8px 16px;color:#FF6680;font-family:var(--Fd);font-size:12px;font-weight:600;cursor:pointer">Disconnect</button>`
+            :`<button onclick="connectSocial('${key}')" style="margin-left:auto;background:linear-gradient(135deg,#003bbf,var(--glow));border:none;border-radius:10px;padding:9px 18px;color:#fff;font-family:var(--Fd);font-size:13px;font-weight:700;cursor:pointer">🔗 Connect</button>`}
+    </div>
+    <div style="background:rgba(0,102,255,.06);border:1px solid rgba(0,102,255,.18);border-radius:12px;padding:11px 14px;margin-bottom:18px;font-family:var(--Fm);font-size:12px;color:var(--glow2)">🔓 ${p.name} is restricted on school networks — access it here inside UnifiedOS, securely.</div>
+    ${conn?[1,2,3].map(i=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px"><div style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><div class="av" style="width:36px;height:36px;font-size:16px">${p.emoji}</div><div><div style="font-size:13px;font-weight:600">@your_handle</div><div style="font-size:11px;color:var(--muted);font-family:var(--Fm)">${['2m','1h','3h'][i-1]} ago</div></div></div><div style="background:var(--surface);border-radius:10px;height:100px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-family:var(--Fm);font-size:12px;margin-bottom:10px">${p.name} content preview</div><div style="display:flex;gap:18px;font-family:var(--Fm);font-size:12px;color:var(--muted)"><span>❤️ ${[42,128,17][i-1]}</span><span>💬 ${[8,23,4][i-1]}</span><span>🔁 ${[5,19,2][i-1]}</span></div></div>`).join('')
+     :`<div style="background:var(--card);border:1px solid var(--border);border-radius:18px;padding:40px;text-align:center"><div style="font-size:48px;margin-bottom:14px">${p.emoji}</div><div style="font-size:16px;font-weight:700;margin-bottom:8px">Connect ${p.name}</div><div style="color:var(--muted);font-size:13px;margin-bottom:20px">Link your account to see your feed here</div><button onclick="connectSocial('${key}')" style="background:linear-gradient(135deg,#003bbf,var(--glow));border:none;border-radius:12px;padding:10px 24px;color:#fff;font-family:var(--Fd);font-size:13px;font-weight:700;cursor:pointer">🔗 Connect Account</button></div>`}
+  </div>`;
+}
+async function connectSocial(key){try{await napi(`/api/social/${key}/connect`,{method:'POST',body:{username:'@your_handle'}})}catch{}socialConn[key]=true;toast(`${PLATFORMS.find(p=>p.key===key)?.name} connected! 🎉`);renderSocialPanel();openSocial(key)}
+async function disconnectSocial(key){try{await napi(`/api/social/${key}/disconnect`,{method:'POST'})}catch{}socialConn[key]=false;toast(`${PLATFORMS.find(p=>p.key===key)?.name} disconnected`);renderSocialPanel();openSocial(key)}
+
+// ════════════════════ AI ════════════════════
+const AI_CHIPS=[
+  {label:'Explain photosynthesis',type:'edu'},{label:'Help with an essay',type:'edu'},{label:'Solve math problem',type:'edu'},
+  {label:'Best irrigation schedule',type:'agri'},{label:'Pest detection advice',type:'agri'},{label:'Soil health tips',type:'agri'},
+  {label:'Yield prediction factors',type:'agri'},{label:'Study tips for exams',type:'edu'},
+];
+
+function renderAIPanel(){
+  document.getElementById('panel').innerHTML=`
+    <div class="ph"><span class="ph-title">Nova AI</span></div>
+    <div style="padding:14px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;padding:13px;margin-bottom:12px">
+        <div style="color:var(--white);font-size:13px;font-weight:600;margin-bottom:5px">🤖 Nova</div>
+        <div style="color:var(--muted);font-family:var(--Fm);font-size:12px">Academic + SmartAgri intelligence. Powered by Claude AI.</div>
+      </div>
+      <div style="color:var(--muted);font-family:var(--Fm);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:9px">Quick prompts</div>
+      ${AI_CHIPS.map(c=>`<div class="pitem" onclick="sendAISuggestion(${JSON.stringify(c.label)})" style="border-radius:9px;margin-bottom:3px">
+        <div style="font-size:11px;opacity:.5;flex-shrink:0">${c.type==='agri'?'🌾':'🎓'}</div>
+        <div style="color:var(--white);font-size:12px">${c.label}</div>
+      </div>`).join('')}
+    </div>
+  `;
+  renderAIMain();
+}
+
+function renderAIMain(){
+  const pane=document.getElementById('mpane');
+  const hasMsgs=S.aiMsgs.length>0;
+  pane.innerHTML=`<div style="display:flex;flex-direction:column;height:100%;overflow:hidden">
+    ${hasMsgs?`<div class="ai-msgs" id="aiMsgs">${S.aiMsgs.map(m=>`
+      <div class="ai-msg ${m.role==='user'?'user':''}">
+        ${m.role!=='user'?`<div class="ai-av nova" style="position:relative"><div class="ai-orb-ring" style="position:absolute;inset:0;border-radius:50%"></div><div class="ai-orb-inner">🤖</div></div>`:''}
+        <div class="ai-bubble ${m.role==='user'?'user':'nova'}">${m.content.replace(/\n/g,'<br>').replace(/`([^`]+)`/g,'<code>$1</code>')}</div>
+        ${m.role==='user'?`<div class="ai-av" style="background:linear-gradient(135deg,#003bbf,var(--glow));border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${ini(S.user?.name)}</div>`:''}
+      </div>`).join('')}
+      ${S.aiTyping?`<div class="ai-msg"><div class="ai-av nova" style="position:relative"><div class="ai-orb-ring" style="position:absolute;inset:0;border-radius:50%;animation:spin 2s linear infinite"></div><div class="ai-orb-inner">🤖</div></div><div class="ai-bubble nova"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>`:''}
+    </div>`:`<div class="ai-welcome">
+      <div class="ai-orb"><div class="ai-orb-ring"></div><div class="ai-orb-inner" style="font-size:28px">🤖</div></div>
+      <div class="ai-name">Nova AI</div>
+      <div class="ai-tag">// academic + farming intelligence</div>
+      <div style="color:var(--muted);font-size:13px;max-width:320px;text-align:center">Ask anything — from equations to crop recommendations. Two specialities, one AI.</div>
+      <div class="ai-chips">${AI_CHIPS.map(c=>`<div class="ai-chip ${c.type}" onclick="sendAISuggestion(${JSON.stringify(c.label)})">${c.label}</div>`).join('')}</div>
+    </div>`}
+    <div class="minput-wrap" style="border-top:1px solid var(--border)">
+      <div class="minput-inner">
+        <input class="minput" id="aiIn" placeholder="Ask Nova anything…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMsg()}"/>
+        <button class="send-btn" onclick="sendAIMsg()">🤖</button>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>{const m=document.getElementById('aiMsgs');if(m)m.scrollTop=m.scrollHeight},50);
+}
+
+function sendAISuggestion(txt){const i=document.getElementById('aiIn');if(i){i.value=txt}sendAIMsg()}
+async function sendAIMsg(){
+  const inp=document.getElementById('aiIn');if(!inp||!inp.value.trim())return;
+  const content=inp.value.trim();inp.value='';
+  S.aiMsgs.push({role:'user',content});S.aiTyping=true;renderAIMain();
+  try{
+    const data=await napi('/api/ai/chat',{method:'POST',body:{messages:S.aiMsgs.filter(m=>m.role!=='system')}});
+    S.aiTyping=false;S.aiMsgs.push({role:'assistant',content:data.content});
+  }catch(e){
+    S.aiTyping=false;
+    const demos={'photosynthesis':'**Photosynthesis** converts sunlight to energy:\n`6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂`\nChloroplasts absorb light to produce glucose and oxygen.','irrigation':'For optimal irrigation: check soil moisture (target 40-60%), irrigate early morning, use drip systems for efficiency. Adjust based on crop stage and weather forecasts.','soil':'Healthy soil needs: pH 6-7, organic matter >3%, good drainage, microbial activity. Test quarterly and amend with compost.'};
+    const key=Object.keys(demos).find(k=>content.toLowerCase().includes(k));
+    S.aiMsgs.push({role:'assistant',content:key?demos[key]:`I'm Nova, your unified AI assistant! 🤖 I can help with academic questions (any subject) and smart farming advice. What would you like to explore?`});
+  }
+  renderAIMain();
+}
+
+// ════════════════════ SMART AGRI ════════════════════
+const DEMO_FARMS=[{id:1,name:'Green Valley Farm',location:'Kampala, Uganda',area_hectares:12.5}];
+const DEMO_SENSORS=[
+  {id:1,device_id:'SENSOR_001',name:'Soil Moisture #1',sensor_type:'soil_moisture',is_active:true,battery_level:87,last_seen:new Date(Date.now()-120000)},
+  {id:2,device_id:'SENSOR_002',name:'Temperature #1',sensor_type:'temperature',is_active:true,battery_level:92,last_seen:new Date(Date.now()-180000)},
+  {id:3,device_id:'SENSOR_003',name:'pH Probe #1',sensor_type:'ph',is_active:true,battery_level:74,last_seen:new Date(Date.now()-60000)},
+  {id:4,device_id:'SENSOR_004',name:'Humidity #1',sensor_type:'humidity',is_active:false,battery_level:12,last_seen:new Date(Date.now()-86400000)},
+];
+const DEMO_READINGS={SENSOR_001:{value:42.3,unit:'%'},SENSOR_002:{value:28.7,unit:'°C'},SENSOR_003:{value:6.4,unit:'pH'},SENSOR_004:{value:65.1,unit:'%'}};
+const DEMO_ALERTS=[
+  {id:1,alert_type:'threshold',severity:'critical',message:'Soil Moisture #1 is LOW: 18% (min: 20%)',is_resolved:false,created_at:new Date(Date.now()-600000)},
+  {id:2,alert_type:'anomaly',severity:'warning',message:'Anomalous reading on Temperature #1: 34.2°C',is_resolved:false,created_at:new Date(Date.now()-3600000)},
+  {id:3,alert_type:'threshold',severity:'warning',message:'Battery LOW on Humidity #1: 12%',is_resolved:true,created_at:new Date(Date.now()-86400000)},
+];
+const DEMO_RECS=[
+  {id:1,category:'irrigation',title:'Increase irrigation frequency',description:'Soil moisture is dropping below optimal levels. Recommend 2x daily irrigation for next 3 days.',priority:'high',confidence:0.91},
+  {id:2,category:'fertilizer',title:'Apply nitrogen fertilizer',description:'Leaf color analysis suggests nitrogen deficiency. Apply 40kg/ha urea within 48 hours.',priority:'medium',confidence:0.78},
+  {id:3,category:'pest_control',title:'Scout for aphids in Field A',description:'Temperature and humidity conditions are favorable for aphid outbreaks this week.',priority:'medium',confidence:0.65},
+];
+
+async function loadAgriData(){
+  try{S.agriData.farms=await papi('/api/crops/farms')}catch{S.agriData.farms=DEMO_FARMS}
+  if(S.agriData.farms.length&&!S.agriData.activeFarm)S.agriData.activeFarm=S.agriData.farms[0];
+  try{const farmId=S.agriData.activeFarm?.id||1;S.agriData.alerts=await papi(`/api/alerts/?farm_id=${farmId}&resolved=false`)}catch{S.agriData.alerts=DEMO_ALERTS.filter(a=>!a.is_resolved)}
+  const cnt=S.agriData.alerts.filter(a=>!a.is_resolved).length;
+  const badge=document.getElementById('alertBadge');
+  if(badge&&cnt>0){badge.textContent=cnt>9?'9+':cnt;badge.style.display='flex'}
+}
+
+function renderFarmPanel(){
+  const farms=S.agriData.farms.length?S.agriData.farms:DEMO_FARMS;
+  document.getElementById('panel').innerHTML=`
+    <div class="ph"><span class="ph-title">Farm Dashboard</span><div class="ph-action" style="font-size:12px;color:var(--agri)">🌾</div></div>
+    <div class="search-wrap"><input class="search-in" placeholder="Search farms…"/></div>
+    <div class="plist">${farms.map(f=>`<div class="pitem${S.agriData.activeFarm?.id===f.id?' agri-active':''}" onclick="selectFarm(${f.id})">
+      <div class="av" style="background:linear-gradient(135deg,#166534,var(--agri))">🌾</div>
+      <div class="ib"><div class="ib-name">${f.name}</div><div class="ib-sub">${f.location||''} · ${f.area_hectares||'?'}ha</div></div>
+    </div>`).join('')}</div>
+  `;
+  renderFarmDashboard();
+}
+
+async function selectFarm(id){
+  S.agriData.activeFarm=S.agriData.farms.find(f=>f.id===id)||(S.agriData.farms.length?S.agriData.farms[0]:DEMO_FARMS[0]);
+  renderFarmPanel();
+}
+
+async function renderFarmDashboard(){
+  const farm=S.agriData.activeFarm||DEMO_FARMS[0];
+  let stats={sensors:3,active_alerts:1,critical_alerts:1,pending_recs:2,readings_24h:142};
+  try{const d=await papi(`/api/dashboard/farm/${farm.id}`);stats=d}catch{}
+  const readings=DEMO_READINGS;
+  const sensorInfo={soil_moisture:{icon:'💧',color:'#0066FF',low:20,high:80},temperature:{icon:'🌡️',color:'#FF6600',low:5,high:40},ph:{icon:'⚗️',color:'#9333ea',low:5.5,high:7.5},humidity:{icon:'💦',color:'#0099AA',low:30,high:70}};
+
+  document.getElementById('mpane').innerHTML=`
+    <div style="padding:22px;overflow-y:auto;flex:1">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#166534,var(--agri));display:flex;align-items:center;justify-content:center;font-size:22px">🌾</div>
+        <div><div style="font-size:20px;font-weight:800">${farm.name}</div><div style="color:var(--muted);font-family:var(--Fm);font-size:12px">${farm.location||'Location not set'} · ${farm.area_hectares||'?'} hectares</div></div>
+        <div class="live-pill" style="margin-left:auto">LIVE</div>
+      </div>
+      <div class="agri-grid">
+        ${Object.entries(readings).map(([dev,r])=>{
+          const s=DEMO_SENSORS.find(s=>s.device_id===dev);if(!s)return'';
+          const si=sensorInfo[s.sensor_type]||{icon:'📊',color:var('--agri'),low:0,high:100};
+          const pct=((r.value-si.low)/(si.high-si.low)*100).toFixed(0);
+          const ok=r.value>=si.low&&r.value<=si.high;
+          return `<div class="agri-card">
+            <div class="agri-card-accent" style="background:${si.color}"></div>
+            <div class="agri-icon">${si.icon}</div>
+            <div class="agri-label">${s.name}</div>
+            <div class="agri-val">${r.value}<span class="agri-unit">${r.unit}</span></div>
+            <div style="background:var(--surface);border-radius:6px;height:4px;margin-top:10px;overflow:hidden"><div style="height:100%;border-radius:6px;background:${ok?si.color:'#FF4466'};width:${Math.min(100,Math.max(0,pct))}%;transition:width .5s"></div></div>
+            <div class="agri-trend ${ok?'ok':'down'}">${ok?'✓ Normal':'⚠ Out of range'}</div>
+          </div>`;
+        }).join('')}
+        <div class="agri-card" style="border-color:rgba(255,68,102,.25)">
+          <div class="agri-card-accent" style="background:#FF4466"></div>
+          <div class="agri-icon">🚨</div>
+          <div class="agri-label">Active Alerts</div>
+          <div class="agri-val" style="color:${stats.critical_alerts>0?'#FF4466':'var(--white)'}">${stats.active_alerts||S.agriData.alerts.length}</div>
+          <div class="agri-trend down">${stats.critical_alerts||0} critical</div>
+        </div>
+        <div class="agri-card" style="border-color:rgba(34,197,94,.25)">
+          <div class="agri-card-accent" style="background:var(--agri)"></div>
+          <div class="agri-icon">💡</div>
+          <div class="agri-label">AI Recommendations</div>
+          <div class="agri-val" style="color:var(--agri)">${stats.pending_recs||DEMO_RECS.length}</div>
+          <div class="agri-trend ok">Pending review</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function var_(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+
+function renderSensorsPanel(){
+  document.getElementById('panel').innerHTML=`
+    <div class="ph"><span class="ph-title">Sensors</span><div class="ph-action" style="color:var(--agri)">📡</div></div>
+    <div class="plist">${DEMO_SENSORS.map(s=>`<div class="pitem${!s.is_active?'':' agri-active'}" onclick="showSensorDetail(${s.id})">
+      <div class="sensor-dot ${s.is_active?'active':'inactive'}" style="margin:0 6px;flex-shrink:0"></div>
+      <div class="ib"><div class="ib-name">${s.name}</div><div class="ib-sub">${s.sensor_type.replace(/_/g,' ')} · 🔋${s.battery_level}%</div></div>
+    </div>`).join('')}
+    </div>
+  `;
+  document.getElementById('mpane').innerHTML=`<div style="padding:22px">
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:18px">Sensor Network</h2>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:20px">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:700">All Sensors</span>
+        <div class="live-pill">LIVE</div>
+      </div>
+      ${DEMO_SENSORS.map(s=>`<div class="sensor-row">
+        <div class="sensor-dot ${s.is_active?'active':'inactive'}"></div>
+        <div style="flex:1"><div style="color:var(--white);font-size:13px;font-weight:600">${s.name}</div><div style="color:var(--muted);font-family:var(--Fm);font-size:11px">${s.device_id} · ${s.sensor_type.replace(/_/g,' ')}</div></div>
+        <div style="text-align:right">
+          <div style="font-size:16px;font-weight:700;color:${s.is_active?'var(--agri)':'var(--muted)'}">${DEMO_READINGS[s.device_id]?.value||'—'} ${DEMO_READINGS[s.device_id]?.unit||''}</div>
+          <div style="font-size:11px;color:var(--muted);font-family:var(--Fm)">🔋 ${s.battery_level}% · ${ago(s.last_seen)}</div>
+        </div>
+      </div>`).join('')}
+    </div>
+    <div style="font-family:var(--Fm);font-size:12px;color:var(--muted)">💡 HTTP ingest: POST /api/agri/sensors/ingest with {"device_id":"SENSOR_001","value":45.3,"unit":"%"}</div>
+  </div>`;
+}
+
+function renderAlertsPanel(){
+  const alerts=S.agriData.alerts.length?S.agriData.alerts:DEMO_ALERTS;
+  document.getElementById('panel').innerHTML=`
+    <div class="ph"><span class="ph-title">Alerts</span><span style="font-family:var(--Fm);font-size:11px;color:#FF4466">${alerts.filter(a=>!a.is_resolved).length} active</span></div>
+    <div class="plist">${alerts.map(a=>`<div class="pitem${a.is_resolved?'':' agri-active'}" onclick="">
+      <div class="alert-dot ${a.severity}" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${a.severity==='critical'?'#FF4466':a.severity==='warning'?'#FF9900':'var(--glow2)'}"></div>
+      <div class="ib"><div class="ib-name" style="font-size:12px">${a.message.slice(0,38)}…</div><div class="ib-sub">${ago(a.created_at||a.createdAt||new Date())}</div></div>
+    </div>`).join('')}</div>
+  `;
+  document.getElementById('mpane').innerHTML=`<div style="padding:22px;overflow-y:auto;flex:1">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
+      <h2 style="font-size:20px;font-weight:800">Alert Center</h2>
+      <div class="live-pill">LIVE</div>
+    </div>
+    ${alerts.map(a=>`<div style="display:flex;gap:13px;background:var(--card);border:1px solid ${a.severity==='critical'?'rgba(255,68,102,.3)':a.is_resolved?'var(--border)':'rgba(255,153,0,.25)'};border-radius:14px;padding:16px;margin-bottom:10px;opacity:${a.is_resolved?.6:1}">
+      <div style="width:9px;height:9px;border-radius:50%;background:${a.severity==='critical'?'#FF4466':a.severity==='warning'?'#FF9900':'var(--glow2)'};flex-shrink:0;margin-top:4px"></div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:11px;font-weight:700;color:${a.severity==='critical'?'#FF4466':'#FF9900'};text-transform:uppercase;letter-spacing:.5px">${a.severity}</span>
+          <span style="font-family:var(--Fm);font-size:11px;color:var(--muted)">${ago(a.created_at||new Date())}</span>
+        </div>
+        <div style="color:var(--white);font-size:13px;margin-bottom:8px">${a.message}</div>
+        ${!a.is_resolved?`<button onclick="resolveAlert(${a.id})" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:5px 14px;color:var(--agri);font-family:var(--Fd);font-size:12px;font-weight:600;cursor:pointer">✓ Resolve</button>`:`<span style="color:var(--agri);font-family:var(--Fm);font-size:12px">✓ Resolved</span>`}
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+async function resolveAlert(id){
+  try{await papi(`/api/alerts/${id}/resolve`,{method:'POST'})}catch{}
+  const a=DEMO_ALERTS.find(a=>a.id===id);if(a)a.is_resolved=true;
+  toast('Alert resolved ✓','success');renderAlertsPanel();
+}
+
+function renderRecsPanel(){
+  document.getElementById('panel').innerHTML=`
+    <div class="ph"><span class="ph-title">AI Recs</span><div style="font-size:10px;font-family:var(--Fm);color:var(--agri)">${DEMO_RECS.length} pending</div></div>
+    <div class="plist">${DEMO_RECS.map(r=>`<div class="pitem agri-active" onclick="">
+      <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${r.priority==='critical'?'#FF4466':r.priority==='high'?'#FF9900':'var(--glow2)'}"></div>
+      <div class="ib"><div class="ib-name" style="font-size:12px">${r.title}</div><div class="ib-sub">${r.category.replace(/_/g,' ')} · ${Math.round(r.confidence*100)}% conf.</div></div>
+    </div>`).join('')}</div>
+  `;
+  document.getElementById('mpane').innerHTML=`<div style="padding:22px;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
+      <h2 style="font-size:20px;font-weight:800">AI Recommendations</h2>
+      <button onclick="generateRecs()" style="margin-left:auto;background:linear-gradient(135deg,#166534,var(--agri));border:none;border-radius:10px;padding:8px 16px;color:#fff;font-family:var(--Fd);font-size:12px;font-weight:700;cursor:pointer">🤖 Refresh</button>
+    </div>
+    ${DEMO_RECS.map(r=>`<div class="rec-card ${r.priority}">
+      <div class="rec-meta">
+        <span class="rec-badge ${r.category}">${r.category.replace(/_/g,' ')}</span>
+        <span style="font-family:var(--Fm);font-size:10px;color:var(--muted);margin-left:auto">${Math.round(r.confidence*100)}% confidence</span>
+      </div>
+      <div class="rec-title" style="margin-top:8px">${r.title}</div>
+      <div class="rec-desc">${r.description}</div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button onclick="applyRec(${r.id})" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:6px 14px;color:var(--agri);font-family:var(--Fd);font-size:12px;font-weight:600;cursor:pointer">✓ Apply</button>
+        <button style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);font-family:var(--Fd);font-size:12px;cursor:pointer">Dismiss</button>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+async function applyRec(id){
+  try{await papi(`/api/ai/recommendations/${id}/apply`,{method:'POST'})}catch{}
+  toast('Recommendation applied ✓');const idx=DEMO_RECS.findIndex(r=>r.id===id);if(idx>-1)DEMO_RECS.splice(idx,1);renderRecsPanel();
+}
+async function generateRecs(){
+  toast('Generating AI recommendations…');
+  try{const farm=S.agriData.activeFarm||DEMO_FARMS[0];await papi(`/api/ai/recommend/${farm.id}/1`,{method:'POST'})}catch{}
+  toast('Recommendations updated! 💡');renderRecsPanel();
+}
+
+// ════════════════════ ADMIN ════════════════════
+const D_USERS=[
+  {name:'Amara Osei',email:'amara@gmail.com',role:'user',isOnline:true,createdAt:'2025-01-12'},
+  {name:'Kwame Mensah',email:'kwame@gmail.com',role:'user',isOnline:false,createdAt:'2025-02-03'},
+  {name:'Priya Sharma',email:'priya@gmail.com',role:'user',isOnline:true,createdAt:'2025-01-28'},
+  {name:'Platform Admin',email:'admin@platform.app',role:'admin',isOnline:true,createdAt:'2025-01-01'},
+];
+const D_ACT=[
+  {type:'login',detail:'Amara Osei signed in via Google',createdAt:new Date(Date.now()-120000),color:'#00FF88'},
+  {type:'message',detail:'Kwame Mensah sent 12 messages in Study Group',createdAt:new Date(Date.now()-300000),color:'#0066FF'},
+  {type:'ai_chat',detail:'Priya Sharma asked Nova AI about photosynthesis',createdAt:new Date(Date.now()-600000),color:'#FF3CAC'},
+  {type:'agri',detail:'Soil moisture sensor SENSOR_001 reported critical low: 18%',createdAt:new Date(Date.now()-900000),color:'#22c55e'},
+  {type:'alert',detail:'SmartAgri: critical alert dispatched via SMS to farm owner',createdAt:new Date(Date.now()-1200000),color:'#FF4466'},
+  {type:'social_connect',detail:'Priya Sharma connected TikTok via Social Hub',createdAt:new Date(Date.now()-2400000),color:'#00CFFF'},
+];
+
+async function adminTab(tab){
+  S.adminTab=tab;
+  document.querySelectorAll('.admin-nav').forEach(b=>b.classList.remove('active'));
+  document.getElementById('an-'+tab)?.classList.add('active');
+  const c=document.getElementById('adminContent');
+  c.innerHTML='<div style="color:var(--muted);font-family:var(--Fm)">Loading…</div>';
+
+  let stats={users:1284,messages:48392,convos:6201,mails:892,activities:15200,online:47};
+  let agriStats={sensors:3,active_alerts:1,critical_alerts:1,pending_recs:2};
+  try{stats=await napi('/api/admin/stats')}catch{}
+  try{const d=await papi('/api/dashboard/farm/1');agriStats={sensors:d.sensors,active_alerts:d.active_alerts,critical_alerts:d.critical_alerts,pending_recs:d.pending_recs}}catch{}
+
+  if(tab==='dashboard'){c.innerHTML=`
+    <div class="a-title">Dashboard Overview</div><div class="a-sub">// unified platform intelligence — EduVerse + SmartAgri</div>
+    <div style="color:var(--muted);font-family:var(--Fm);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">🎓 EduVerse</div>
+    <div class="stats-g">
+      ${[['Users',stats.users,'👥','#7C3AED'],['Messages',stats.messages,'💬','#0066FF'],['Mails',stats.mails,'📧','#FF6600'],['Online',stats.online,'🟢','#00FF88']].map(([l,v,i,a])=>`<div class="s-card" style="--ac:${a}"><div class="s-icon">${i}</div><div class="s-lbl">${l}</div><div class="s-val">${(+v).toLocaleString()}</div></div>`).join('')}
+    </div>
+    <div style="color:var(--muted);font-family:var(--Fm);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">🌾 SmartAgri</div>
+    <div class="stats-g">
+      ${[['Active Sensors',agriStats.sensors,'📡','#22c55e'],['Active Alerts',agriStats.active_alerts,'🚨','#FF4466'],['AI Recs',agriStats.pending_recs,'💡','#0066FF']].map(([l,v,i,a])=>`<div class="s-card" style="--ac:${a}"><div class="s-icon">${i}</div><div class="s-lbl">${l}</div><div class="s-val">${v||0}</div></div>`).join('')}
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="font-size:16px;font-weight:700">Recent Activity</div><div class="live-pill">LIVE</div></div>
+    <div class="act-list">${D_ACT.map(a=>`<div class="act-row"><div class="act-dot" style="background:${a.color}"></div><div class="act-txt">${a.detail}</div><div class="act-time">${ago(a.createdAt)}</div></div>`).join('')}</div>
+  `;}
+  else if(tab==='live'){c.innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px"><div class="a-title">Live Monitor</div><div class="live-pill">● ${stats.online} ONLINE</div></div>
+    <div class="a-sub">// everything happening right now across both systems</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:22px">
+      ${D_USERS.filter(u=>u.isOnline).map(u=>`<div style="display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid rgba(34,197,94,.2);border-radius:13px;padding:13px">
+        <div class="av" style="width:34px;height:34px;font-size:11px">${ini(u.name)}</div>
+        <div><div style="color:var(--white);font-size:13px;font-weight:600">${u.name}</div><div style="color:var(--muted);font-family:var(--Fm);font-size:11px">${u.email}</div></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;margin-left:auto"></div>
+      </div>`).join('')}
+    </div>
+    <div class="act-list">${[...D_ACT,...D_ACT.map(a=>({...a,detail:a.detail.replace('Amara','Jordan'),createdAt:new Date(new Date(a.createdAt).getTime()-3600000)}))].map(a=>`<div class="act-row"><div class="act-dot" style="background:${a.color}"></div><div class="act-txt">${a.detail}</div><div class="act-time">${new Date(a.createdAt).toLocaleString()}</div></div>`).join('')}</div>
+  `;setTimeout(()=>{if(S.adminTab==='live')adminTab('live')},12000);}
+  else if(tab==='users'){
+    let users=D_USERS;
+    try{users=await napi('/api/admin/users')}catch{}
+    if(S.user&&!users.find(u=>u.email===S.user?.email))users=[...users,{...S.user,isOnline:true,createdAt:new Date().toISOString()}];
+    c.innerHTML=`<div class="a-title">All Users</div><div class="a-sub">// ${users.length} registered accounts</div>
+    <div class="tbl-wrap"><table class="atbl"><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead><tbody>
+    ${users.map(u=>`<tr>
+      <td><div style="display:flex;align-items:center;gap:9px"><div class="av" style="width:32px;height:32px;font-size:11px">${ini(u.name)}</div><span style="color:var(--white);font-size:12px;font-weight:500">${u.name}${u.email===S.user?.email?'<span style="background:rgba(0,102,255,.18);color:var(--glow2);font-size:9px;padding:1px 5px;border-radius:7px;margin-left:5px;font-weight:700">YOU</span>':''}</span></div></td>
+      <td style="color:var(--muted);font-family:var(--Fm);font-size:11px">${u.email}</td>
+      <td><span class="rbadge2 ${u.role}">${u.role}</span></td>
+      <td><span class="odot ${u.isOnline?'on':'off'}"></span><span style="color:${u.isOnline?'var(--green)':'var(--muted)'};font-size:11px">${u.isOnline?'Online':'Offline'}</span></td>
+      <td style="color:var(--muted);font-family:var(--Fm);font-size:11px">${new Date(u.createdAt).toLocaleDateString()}</td>
+      <td>${u.role!=='admin'&&u.email!==S.user?.email?`<button class="del-btn" onclick="adminDel('${u._id||u.id||u.email}')">🗑</button>`:''}</td>
+    </tr>`).join('')}
+    </tbody></table></div>`;
+  }
+  else if(tab==='messages'){c.innerHTML=`<div class="a-title">All Messages</div><div class="a-sub">// complete message log</div>${Object.values(DEMO_MSGS).flat().map(m=>`<div style="display:flex;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:13px 16px;margin-bottom:9px"><div class="av" style="width:34px;height:34px;font-size:11px;flex-shrink:0">${ini(m.sender?.name||S.user?.name||'Me')}</div><div><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:4px"><span style="color:var(--white);font-size:12px;font-weight:600">${m.sender?.name||S.user?.name||'You'}</span><span style="color:var(--muted);font-family:var(--Fm);font-size:10px">${fmt(m.createdAt)}</span></div><div style="color:#c0d0e0;font-size:13px">${m.content}</div></div></div>`).join('')}`;}
+  else if(tab==='activity'){c.innerHTML=`<div class="a-title">Activity Log</div><div class="a-sub">// full audit trail — both EduVerse and SmartAgri</div><div class="act-list">${[...D_ACT,...D_ACT.map(a=>({...a,detail:a.detail.replace('Amara','Jordan'),createdAt:new Date(new Date(a.createdAt).getTime()-7200000)}))].map(a=>`<div class="act-row"><div class="act-dot" style="background:${a.color}"></div><div class="act-txt">${a.detail}</div><div class="act-time">${new Date(a.createdAt).toLocaleString()}</div></div>`).join('')}</div>`;}
+  else if(tab==='agri'){c.innerHTML=`<div class="a-title">SmartAgri Stats</div><div class="a-sub">// IoT sensor network + AI recommendation engine</div>
+    <div style="margin-bottom:18px"><div style="font-size:14px;font-weight:700;margin-bottom:12px">Sensor Network</div>
+    <div class="tbl-wrap"><table class="atbl"><thead><tr><th>Device</th><th>Type</th><th>Value</th><th>Battery</th><th>Status</th></tr></thead><tbody>
+    ${DEMO_SENSORS.map(s=>`<tr><td style="color:var(--white);font-size:12px;font-weight:600">${s.name}</td><td style="font-family:var(--Fm);font-size:11px;color:var(--muted)">${s.sensor_type.replace(/_/g,' ')}</td><td style="font-weight:700;color:var(--agri)">${DEMO_READINGS[s.device_id]?.value||'—'} ${DEMO_READINGS[s.device_id]?.unit||''}</td><td style="font-family:var(--Fm);font-size:11px;color:${s.battery_level<20?'#FF4466':'var(--muted)'}">${s.battery_level}%</td><td><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${s.is_active?'rgba(34,197,94,.15)':'rgba(100,100,100,.15)'};color:${s.is_active?'var(--agri)':'var(--muted)'}">${s.is_active?'Active':'Inactive'}</span></td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px">Recent Alerts</div>
+    <div class="act-list">${DEMO_ALERTS.map(a=>`<div class="act-row"><div class="act-dot" style="background:${a.severity==='critical'?'#FF4466':a.severity==='warning'?'#FF9900':'var(--glow2)'}"></div><div class="act-txt">${a.message}</div><div class="act-time">${ago(a.created_at||new Date())}</div></div>`).join('')}</div>`;}
+}
+
+async function adminDel(id){
+  if(!confirm('Delete this user permanently?'))return;
+  try{await napi(`/api/admin/users/${id}`,{method:'DELETE'})}catch{}
+  toast('User deleted');adminTab('users');
+}
+
+function toggleProfile(){document.getElementById('profileOverlay').classList.toggle('open')}
+</script>
+</body>
+</html>
